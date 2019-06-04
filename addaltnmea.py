@@ -9,7 +9,8 @@ import json
 
 # Show usage.
 def ShowUsage():
-    print("Usage: python " + os.path.basename(__file__) + " input-nmea-file-name <output-nmea-file-name>")
+    #print("Usage: python " + os.path.basename(__file__) + " input-nmea-file-name <output-nmea-file-name>")
+    print("Usage: (python) " + os.path.basename(sys.argv[0]) + " input-nmea-file-name <output-nmea-file-name>")
 
 # Get input & output file names.
 def GetInputFileName():
