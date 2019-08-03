@@ -6,6 +6,7 @@ from sys import argv
 import os
 import urllib.request
 import json
+from tqdm import tqdm
 
 # Show usage.
 def ShowUsage():
@@ -49,27 +50,27 @@ def GetLatAndLon(gpgga_arr):
     lon = float(gpgga_arr[IDX_LONGITUDE])
     lat_q, lat_mod = divmod(lat, 100)
     lon_q, lon_mod = divmod(lon, 100)
-    print('lat = %5.4f, lat_q = %d, lat_mod = %2.4f' % (lat, lat_q, lat_mod))
-    print('lon = %5.4f, lon_q = %d, lon_mod = %2.4f' % (lon, lon_q, lon_mod))
+#    print('lat = %5.4f, lat_q = %d, lat_mod = %2.4f' % (lat, lat_q, lat_mod))
+#    print('lon = %5.4f, lon_q = %d, lon_mod = %2.4f' % (lon, lon_q, lon_mod))
     dd_lat = lat_q + lat_mod / 60
     dd_lon = lon_q + lon_mod / 60
-    print('dd_lat = %f, dd_lon = %f' % (dd_lat, dd_lon))
+#    print('dd_lat = %f, dd_lon = %f' % (dd_lat, dd_lon))
     return(dd_lat, dd_lon)
 
 # Get altitude added GPGGA string.
 def GetUpdatedGpgga(gpgga_arr, altitude):
     gpgga_arr[IDX_ANTENA_ALT] = str(altitude)
     gpgga_byte = ','.join(gpgga_arr).encode()
-    print(gpgga_byte)
+#    print(gpgga_byte)
     # Make updated check sum
     ch_sum = 0
     for b_char in gpgga_byte:
         if b_char == b'$':
             continue
         ch_sum = ch_sum ^ b_char
-    print(format(ch_sum, '02x'))
+#    print(format(ch_sum, '02x'))
     new_gpgga_str = ','.join(gpgga_arr) + '*%02x' % ch_sum
-    print('new_gpgga_str = %s' % new_gpgga_str)
+#    print('new_gpgga_str = %s' % new_gpgga_str)
     return(new_gpgga_str)
 
 # Get splited GPGGA gfactors as an array.
@@ -81,20 +82,26 @@ def GetGpggaArray(gpgga_str):
 
 # Output altitude added NMEA file.
 def OutputAltitude(input_file, output_file):
-    # Scan input file.
+    # Prepare Progress bar
+    total_line = sum([1 for _ in open(input_file)])
+    pbar = tqdm(total = total_line)
+    # Prepare Output file
     of = open(output_file, "w")
+    # Scan input file.
     with open(input_file, "r") as f:
         for line in f:
             nmea_str = line.strip()
             if '$GPGGA' == nmea_str[0:6]:
                 gpgga_arr = GetGpggaArray(nmea_str)
-                print(gpgga_arr)
+#                print(gpgga_arr)
                 dd_lat, dd_lon = GetLatAndLon(gpgga_arr)
                 altitude = GetAltitude(dd_lat, dd_lon)
-                print(altitude)
+#                print(altitude)
                 nmea_str = GetUpdatedGpgga(gpgga_arr, altitude)
             of.write(nmea_str + '\n')
+            pbar.update(1)
     of.close()
+    pbar.close()
             
 # Main
 if __name__ == "__main__":
